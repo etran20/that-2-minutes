@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="That 2 Minutes">
+<meta name="theme-color" content="#111318">
+<title>That 2 Minutes</title>
+
+<style>
+body{
+margin:0;background:#0b0b0f;color:white;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+display:flex;justify-content:center;align-items:center;
+min-height:100vh;text-align:center
+}
+.app{width:90%;max-width:500px}
+h1{font-size:32px;margin-bottom:5px}
+.sub{color:#aaa;margin-bottom:30px}
+.phase{color:#4ade80;font-weight:bold}
+.time{font-size:100px;font-weight:900;margin:10px}
+.exercise{font-size:26px;font-weight:bold}
+.round{color:#aaa;margin:10px 0 25px}
+button{
+font-size:20px;font-weight:bold;padding:17px;
+border:0;border-radius:15px;margin:5px;width:43%
+}
+.start{background:#4ade80}
+.reset{background:#333;color:white}
+input{
+width:85%;padding:12px;margin:5px;border-radius:10px;
+border:1px solid #555;background:#18181f;color:white;font-size:16px
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h1>That 2 Minutes</h1>
+<div class="sub">3 exercises • 2:00 work + 0:30 rest</div>
+
+<div id="phase" class="phase">WORK</div>
+<div id="time" class="time">2:00</div>
+<div id="exercise" class="exercise">Exercise 1</div>
+<div id="round" class="round">Round 1 of 3</div>
+
+<button class="start" id="start">Start</button>
+<button class="reset" onclick="resetTimer()">Reset</button>
+
+<h3>Exercise Names</h3>
+<input id="e1" value="Exercise 1">
+<input id="e2" value="Exercise 2">
+<input id="e3" value="Exercise 3">
+
+</div>
+
+<script>
+const WORK=120;
+const REST=30;
+let round=1;
+let mode="work";
+let seconds=WORK;
+let running=false;
+let interval;
+
+const time=document.getElementById("time");
+const phase=document.getElementById("phase");
+const exercise=document.getElementById("exercise");
+const roundText=document.getElementById("round");
+const start=document.getElementById("start");
+
+function name(){
+return document.getElementById("e"+round).value || "Exercise "+round;
+}
+
+function display(){
+let m=Math.floor(seconds/60);
+let s=seconds%60;
+time.textContent=m+":"+String(s).padStart(2,"0");
+exercise.textContent=name();
+roundText.textContent="Round "+round+" of 3";
+phase.textContent=mode==="work"?"WORK":"REST";
+phase.style.color=mode==="work"?"#4ade80":"#60a5fa";
+}
+
+function beep(){
+try{
+let a=new AudioContext();
+let o=a.createOscillator();
+o.connect(a.destination);
+o.start();
+setTimeout(()=>{o.stop();a.close()},250);
+}catch(e){}
+}
+
+function next(){
+beep();
+
+if(mode==="work"){
+mode="rest";
+seconds=REST;
+}else{
+if(round===3){
+clearInterval(interval);
+running=false;
+time.textContent="0:00";
+phase.textContent="DONE";
+exercise.textContent="Workout Complete!";
+roundText.textContent="3 of 3 completed";
+start.textContent="Start Again";
+return;
+}
+round++;
+mode="work";
+seconds=WORK;
+}
+display();
+}
+
+start.onclick=function(){
+if(seconds===0 || (round===3 && phase.textContent==="DONE")){
+resetTimer();
+}
+
+if(running){
+clearInterval(interval);
+running=false;
+start.textContent="Resume";
+}else{
+running=true;
+start.textContent="Pause";
+interval=setInterval(()=>{
+seconds--;
+display();
+if(seconds<=0)next();
+},1000);
+}
+};
+
+function resetTimer(){
+clearInterval(interval);
+round=1;
+mode="work";
+seconds=WORK;
+running=false;
+start.textContent="Start";
+display();
+}
+
+["e1","e2","e3"].forEach(x=>{
+document.getElementById(x).oninput=display;
+});
+
+display();
+</script>
+</body>
+</html>
